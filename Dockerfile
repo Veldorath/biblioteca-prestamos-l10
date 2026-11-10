@@ -1,20 +1,17 @@
-# biblioteca-prestamos: dos etapas. La primera compila con todas las dependencias; la segunda
-# lleva solo las de produccion y lo compilado, y corre sin ser root.
-FROM node:24-alpine AS compilar
+# biblioteca-prestamos: compila en una etapa y ejecuta con dependencias de produccion.
+FROM node:24-slim AS build
 WORKDIR /app
-# Primero solo las dependencias: mientras package-lock.json no cambie, Docker reusa esta capa.
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:24-alpine
-ENV NODE_ENV=production
+FROM node:24-slim
 WORKDIR /app
+ENV NODE_ENV=production
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-COPY --from=compilar /app/dist ./dist
-# El esquema se aplica al arrancar; main.js lo busca dos carpetas arriba de dist/prestamos.
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build /app/dist ./dist
 COPY esquema.sql ./
 USER node
 EXPOSE 3002
