@@ -3,5 +3,9 @@ dist
 *.tsbuildinfo
 .env
 .env.*
-!.env.example
 .git
+**/.env
+**/.env.*
+**/.npmrc
+.github
+!.env.example
